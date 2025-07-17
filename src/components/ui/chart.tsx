@@ -103,14 +103,26 @@ const ChartTooltip = RechartsPrimitive.Tooltip
 
 const ChartTooltipContent = React.forwardRef<
   HTMLDivElement,
-  React.ComponentProps<typeof RechartsPrimitive.Tooltip> &
-    React.ComponentProps<"div"> & {
-      hideLabel?: boolean
-      hideIndicator?: boolean
-      indicator?: "line" | "dot" | "dashed"
-      nameKey?: string
-      labelKey?: string
-    }
+  React.ComponentProps<"div"> & {
+    active?: boolean
+    payload?: Array<{
+      value: any
+      name: string
+      dataKey: string
+      color: string
+      payload: any
+    }>
+    label?: string
+    hideLabel?: boolean
+    hideIndicator?: boolean
+    indicator?: "line" | "dot" | "dashed"
+    nameKey?: string
+    labelKey?: string
+    labelFormatter?: (value: any, payload: any) => React.ReactNode
+    formatter?: (value: any, name: string, item: any, index: number, payload: any) => React.ReactNode
+    color?: string
+    labelClassName?: string
+  }
 >(
   (
     {
@@ -194,8 +206,8 @@ const ChartTooltipContent = React.forwardRef<
                   indicator === "dot" && "items-center"
                 )}
               >
-                {formatter && (item as any).payload && (item as any).name ? (
-                  formatter((item as any).value, (item as any).name, item, index, (item as any).payload)
+                {formatter && item.payload && item.name ? (
+                  formatter(item.value, item.name, item, index, item.payload)
                 ) : (
                   <>
                     {itemConfig?.icon ? (
@@ -235,12 +247,12 @@ const ChartTooltipContent = React.forwardRef<
                           </div>
                         ) : null}
                         <div className="text-muted-foreground">
-                          {itemConfig?.label || (item as any).name}
+                          {itemConfig?.label || item.name}
                         </div>
                       </div>
-                      {(item as any).value && (
+                      {item.value && (
                         <div className="font-mono font-medium tabular-nums text-foreground">
-                          {(item as any).value}
+                          {item.value}
                         </div>
                       )}
                     </div>
@@ -260,11 +272,16 @@ const ChartLegend = RechartsPrimitive.Legend
 
 const ChartLegendContent = React.forwardRef<
   HTMLDivElement,
-  React.ComponentProps<"div"> &
-    Pick<RechartsPrimitive.LegendProps, "payload" | "verticalAlign"> & {
-      hideIcon?: boolean
-      nameKey?: string
-    }
+  React.ComponentProps<"div"> & {
+    hideIcon?: boolean
+    nameKey?: string
+    payload?: Array<{
+      value: string
+      dataKey: string
+      color: string
+    }>
+    verticalAlign?: "top" | "bottom"
+  }
 >(
   ({ className, hideIcon = false, payload, verticalAlign = "bottom", nameKey, ...props }, ref) => {
     const { config } = useChart()
