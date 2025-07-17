@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,8 +13,15 @@ interface HuggingFaceSetupProps {
 }
 
 export function HuggingFaceSetup({ onApiKeySet, isConfigured }: HuggingFaceSetupProps) {
-  const [apiKey, setApiKey] = useState('');
+  const [apiKey, setApiKey] = useState('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');
   const [isValidating, setIsValidating] = useState(false);
+
+  // Auto-configure on component mount
+  useEffect(() => {
+    if (!isConfigured && apiKey) {
+      handleSubmit(new Event('submit') as any);
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,69 +57,54 @@ export function HuggingFaceSetup({ onApiKeySet, isConfigured }: HuggingFaceSetup
         <Alert>
           <Key className="h-4 w-4" />
           <AlertDescription>
-            To enable AI-powered fraud detection, please configure your Hugging Face API access.
-            This is optional for demo purposes - the system will work with mock data if not configured.
+            API key is pre-configured. Click "Configure AI Models" to proceed to the dashboard.
           </AlertDescription>
         </Alert>
 
-        <div className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <h4 className="font-medium mb-2">Getting Your API Key</h4>
-            <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
-              <li>Visit <a href="https://huggingface.co" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Hugging Face</a> and create an account</li>
-              <li>Go to your Settings → Access Tokens</li>
-              <li>Create a new token with "Read" permissions</li>
-              <li>Copy the token and paste it below</li>
-            </ol>
+            <label htmlFor="apiKey" className="text-sm font-medium">
+              Hugging Face API Token
+            </label>
+            <Input
+              id="apiKey"
+              type="password"
+              placeholder="hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              className="mt-1"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Your API key is stored locally and never transmitted to our servers
+            </p>
           </div>
 
-          <Separator />
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="apiKey" className="text-sm font-medium">
-                Hugging Face API Token (Optional)
-              </label>
-              <Input
-                id="apiKey"
-                type="password"
-                placeholder="hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                className="mt-1"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Your API key is stored locally and never transmitted to our servers
-              </p>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button type="submit" disabled={isValidating} className="flex-1">
-                {isValidating ? 'Validating...' : 'Configure AI Models'}
-              </Button>
-              <Button 
-                type="button" 
-                variant="outline"
-                onClick={() => onApiKeySet('')}
-                className="flex-1"
-              >
-                Continue with Demo Mode
-              </Button>
-            </div>
-          </form>
-
-          <div className="text-center">
-            <Button variant="link" asChild>
-              <a 
-                href="https://huggingface.co/settings/tokens" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-sm"
-              >
-                Get API Key <ExternalLink className="h-3 w-3 ml-1" />
-              </a>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Button type="submit" disabled={isValidating} className="flex-1">
+              {isValidating ? 'Validating...' : 'Configure AI Models'}
+            </Button>
+            <Button 
+              type="button" 
+              variant="outline"
+              onClick={() => onApiKeySet('')}
+              className="flex-1"
+            >
+              Continue with Demo Mode
             </Button>
           </div>
+        </form>
+
+        <div className="text-center">
+          <Button variant="link" asChild>
+            <a 
+              href="https://huggingface.co/settings/tokens" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-sm"
+            >
+              Get API Key <ExternalLink className="h-3 w-3 ml-1" />
+            </a>
+          </Button>
         </div>
       </CardContent>
     </Card>
