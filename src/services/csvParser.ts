@@ -1,4 +1,3 @@
-
 import Papa from 'papaparse';
 import { ClaimData } from '../types/fraud';
 
@@ -117,7 +116,7 @@ export class CSVParser {
         Wage_Reported: '600',
         Claim_Amount: '2500',
         Claim_Date: '2024-01-16',
-        Justification_Text: 'Lost job'
+        Justification_Text: 'Lost job due to company downsizing'
       },
       {
         Claim_ID: 'CLM-2024-003',
@@ -134,10 +133,74 @@ export class CSVParser {
         Wage_Reported: '720',
         Claim_Amount: '360',
         Claim_Date: '2024-01-17',
-        Justification_Text: 'Hours reduced from full-time to part-time due to decreased demand for products'
+        Justification_Text: 'Hours reduced from full-time to part-time due to decreased demand'
+      },
+      {
+        Claim_ID: 'CLM-2024-004',
+        Claimant_ID: 'USR-987654',
+        Name: 'Emily Davis',
+        DOB: '1992-05-30',
+        SSN_Hash: 'z1x2c3v4b5n6',
+        Email: 'emily.davis@tempmail.net',
+        Phone: '555-888-7777',
+        IP_Address: '10.0.0.1',
+        Device_ID: 'dev-xyz789',
+        Employer_Name: 'QuickCash Services',
+        Employment_Status: 'Terminated',
+        Wage_Reported: '1200',
+        Claim_Amount: '600',
+        Claim_Date: '2024-01-18',
+        Justification_Text: 'Fired for attendance issues'
+      },
+      {
+        Claim_ID: 'CLM-2024-005',
+        Claimant_ID: 'USR-135792',
+        Name: 'Robert Wilson',
+        DOB: '1980-12-12',
+        SSN_Hash: 'q9w8e7r6t5y4',
+        Email: 'rwilson@legitcompany.com',
+        Phone: '444-222-3333',
+        IP_Address: '192.168.1.200',
+        Device_ID: 'dev-legit001',
+        Employer_Name: 'Established Corp',
+        Employment_Status: 'Laid Off',
+        Wage_Reported: '950',
+        Claim_Amount: '475',
+        Claim_Date: '2024-01-19',
+        Justification_Text: 'Department closure due to budget cuts and strategic reorganization'
       }
     ];
 
-    return Papa.unparse(sampleData);
+    const headers = [
+      'Claim_ID',
+      'Claimant_ID',
+      'Name',
+      'DOB',
+      'SSN_Hash',
+      'Email',
+      'Phone',
+      'IP_Address',
+      'Device_ID',
+      'Employer_Name',
+      'Employment_Status',
+      'Wage_Reported',
+      'Claim_Amount',
+      'Claim_Date',
+      'Justification_Text'
+    ];
+
+    const csvContent = [
+      headers.join(','),
+      ...sampleData.map(row => 
+        headers.map(header => {
+          const value = (row as any)[header];
+          return typeof value === 'string' && value.includes(',') 
+            ? `"${value.replace(/"/g, '""')}"` 
+            : value;
+        }).join(',')
+      )
+    ].join('\n');
+
+    return csvContent;
   }
 }

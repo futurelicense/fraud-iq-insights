@@ -1,158 +1,165 @@
+import { ClaimData } from '../types/fraud';
 
-import { ClaimData, FraudAnalysis } from '../types/fraud';
+interface FraudAnalysisResult {
+  fraud_score: number;
+  fraud_label: string;
+  flags: string[];
+  recommendation: string;
+  explanation: string;
+}
 
 class FraudAnalyzer {
-  private apiKey: string | null = null;
+  private apiKey: string = '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';
+  private baseUrl: string = 'https://api-inference.huggingface.co/models/';
 
-  setApiKey(key: string) {
-    this.apiKey = key;
+  public setApiKey(apiKey: string) {
+    this.apiKey = apiKey;
   }
 
-  async analyzeClaim(claim: ClaimData): Promise<FraudAnalysis> {
-    console.log('Analyzing claim:', claim.Claim_ID);
-    
+  public async analyzeClaim(claim: ClaimData): Promise<FraudAnalysisResult> {
+    // Step 1: Basic Data Validation (Mock for now)
+    const validationFlags = this.validateClaimData(claim);
+
+    // Step 2: Risk Scoring
+    const fraudScore = await this.getFraudScore(claim);
+    const fraudLabel = this.getFraudLabel(fraudScore);
+
+    // Step 3: Flagging
+    const aiFlags = await this.getAIFlags(claim);
+    const flags = [...validationFlags, ...aiFlags];
+
+    // Step 4: Recommendation
+    const recommendation = this.getRecommendation(fraudLabel, flags);
+
+    // Step 5: Explanation
+    const explanation = await this.getExplanation(claim, fraudScore, flags);
+
+    return {
+      fraud_score: fraudScore,
+      fraud_label: fraudLabel,
+      flags: flags,
+      recommendation: recommendation,
+      explanation: explanation
+    };
+  }
+
+  private async queryHuggingFace(modelName: string, inputs: any): Promise<any> {
+    if (!this.apiKey) {
+      // Return mock data for demo mode
+      return this.getMockResponse(modelName, inputs);
+    }
+
     try {
-      // Simulate API delay for realistic feel
-      await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
-      
-      // Calculate fraud score based on various factors
-      const fraudScore = this.calculateFraudScore(claim);
-      const fraudLabel = this.getFraudLabel(fraudScore);
-      const flags = this.generateFlags(claim, fraudScore);
-      const explanation = this.generateExplanation(claim, fraudScore, flags);
-      const recommendation = this.generateRecommendation(fraudScore, flags);
-      
-      return {
-        claim_id: claim.Claim_ID,
-        fraud_score: fraudScore,
-        fraud_label: fraudLabel,
-        explanation,
-        flags,
-        recommendation,
-        confidence: Math.min(0.95, 0.6 + (fraudScore * 0.4)),
-        analyzed_at: new Date().toISOString()
-      };
+      const response = await fetch(`${this.baseUrl}${modelName}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ inputs }),
+      });
+
+      if (!response.ok) {
+        console.warn(`HuggingFace API error: ${response.status}`);
+        return this.getMockResponse(modelName, inputs);
+      }
+
+      return await response.json();
     } catch (error) {
-      console.error('Error analyzing claim:', error);
-      throw new Error('Failed to analyze claim');
+      console.warn('HuggingFace API unavailable, using mock data:', error);
+      return this.getMockResponse(modelName, inputs);
     }
   }
 
-  private calculateFraudScore(claim: ClaimData): number {
-    let score = 0.1; // Base score
-    
-    // Check for suspicious patterns
-    const claimAmount = parseFloat(claim.Claim_Amount) || 0;
-    const wageReported = parseFloat(claim.Wage_Reported) || 0;
-    
-    // High claim amount relative to wage
-    if (claimAmount > wageReported * 4) {
-      score += 0.3;
-    }
-    
-    // Email domain analysis
-    if (claim.Email.includes('tempmail') || claim.Email.includes('10minute')) {
-      score += 0.4;
-    }
-    
-    // Phone number patterns
-    if (claim.Phone.includes('555') || claim.Phone.length < 10) {
-      score += 0.2;
-    }
-    
-    // IP address analysis (simplified)
-    if (claim.IP_Address.startsWith('10.') || claim.IP_Address.includes('127.')) {
-      score += 0.25;
-    }
-    
-    // Employment status red flags
-    if (claim.Employment_Status.toLowerCase().includes('terminated') && 
-        claim.Justification_Text && claim.Justification_Text.length < 20) {
-      score += 0.3;
-    }
-    
-    // Random variation for demonstration
-    score += Math.random() * 0.2;
-    
-    return Math.min(1.0, Math.max(0.0, score));
-  }
-
-  private getFraudLabel(score: number): 'Low' | 'Medium' | 'High' | 'Severe' {
-    if (score < 0.3) return 'Low';
-    if (score < 0.6) return 'Medium';
-    if (score < 0.8) return 'High';
-    return 'Severe';
-  }
-
-  private generateFlags(claim: ClaimData, score: number): string[] {
+  private validateClaimData(claim: ClaimData): string[] {
     const flags: string[] = [];
-    
-    if (score > 0.7) flags.push('High Risk Score');
-    
-    const claimAmount = parseFloat(claim.Claim_Amount) || 0;
-    const wageReported = parseFloat(claim.Wage_Reported) || 0;
-    
-    if (claimAmount > wageReported * 4) {
-      flags.push('Claim Amount Exceeds Expected Wage');
-    }
-    
-    if (claim.Email.includes('tempmail') || claim.Email.includes('10minute')) {
-      flags.push('Suspicious Email Domain');
-    }
-    
-    if (claim.Phone.includes('555')) {
-      flags.push('Invalid Phone Number Pattern');
-    }
-    
-    if (claim.IP_Address.startsWith('10.') || claim.IP_Address.includes('127.')) {
-      flags.push('Internal/Local IP Address');
-    }
-    
-    if (!claim.Justification_Text || claim.Justification_Text.length < 10) {
-      flags.push('Missing or Insufficient Justification');
-    }
-    
-    // Add some variety
-    if (score > 0.5 && Math.random() > 0.7) {
-      flags.push('Multiple Claims from Same Device');
-    }
-    
-    if (score > 0.6 && Math.random() > 0.8) {
-      flags.push('Employer Information Inconsistency');
-    }
-    
+
+    if (!claim.Claim_ID) flags.push('Missing Claim ID');
+    if (!claim.Claimant_ID) flags.push('Missing Claimant ID');
+    if (!claim.Name) flags.push('Missing Name');
+    if (!claim.DOB) flags.push('Missing Date of Birth');
+    if (!claim.SSN_Hash) flags.push('Missing SSN Hash');
+    if (!claim.Email) flags.push('Missing Email');
+    if (!claim.Phone) flags.push('Missing Phone');
+    if (!claim.Employer_Name) flags.push('Missing Employer Name');
+    if (parseFloat(claim.Claim_Amount) > 10000) flags.push('High Claim Amount');
+
     return flags;
   }
 
-  private generateExplanation(claim: ClaimData, score: number, flags: string[]): string {
-    const explanations = [
-      `Claim ${claim.Claim_ID} has been flagged with a fraud score of ${(score * 100).toFixed(1)}%.`,
-      flags.length > 0 ? `Key concerns include: ${flags.slice(0, 2).join(', ')}.` : '',
-      score > 0.7 ? 'This claim requires immediate investigation.' : 
-      score > 0.5 ? 'This claim should be reviewed for potential fraud indicators.' :
-      'This claim appears to have minimal fraud risk.',
-    ].filter(Boolean);
-    
-    return explanations.join(' ');
-  }
+  private async getFraudScore(claim: ClaimData): Promise<number> {
+    // Use a text classification model to get a fraud score
+    const modelName = 'laiyer/deberta-v3-base-turbo-finetuned-text-classification-fraud-detection';
+    const response = await this.queryHuggingFace(modelName, claim.Justification_Text);
 
-  private generateRecommendation(score: number, flags: string[]): string {
-    if (score > 0.8) return 'DENY - Immediate escalation to fraud investigation team';
-    if (score > 0.6) return 'HOLD - Request additional documentation and identity verification';
-    if (score > 0.4) return 'REVIEW - Secondary analyst review recommended';
-    if (score > 0.2) return 'MONITOR - Approve with enhanced monitoring';
-    return 'APPROVE - Standard processing';
-  }
-
-  async analyzeMultipleClaims(claims: ClaimData[]): Promise<FraudAnalysis[]> {
-    const analyses: FraudAnalysis[] = [];
-    
-    for (const claim of claims) {
-      const analysis = await this.analyzeClaim(claim);
-      analyses.push(analysis);
+    if (response && Array.isArray(response) && response.length > 0) {
+      const fraudScore = response.find(item => item.label === 'FRAUD')?.score || 0;
+      return fraudScore;
     }
-    
-    return analyses;
+
+    return 0.5; // Default to medium risk if the API fails
+  }
+
+  private getFraudLabel(fraudScore: number): string {
+    if (fraudScore > 0.9) return 'Severe';
+    if (fraudScore > 0.7) return 'High';
+    if (fraudScore > 0.5) return 'Medium';
+    return 'Low';
+  }
+
+  private async getAIFlags(claim: ClaimData): Promise<string[]> {
+    // Use a text generation model to identify potential fraud flags
+    const modelName = 'google/flan-t5-base';
+    const prompt = `Identify potential fraud indicators in the following claim: ${JSON.stringify(claim)}. Focus on inconsistencies and suspicious details.`;
+    const response = await this.queryHuggingFace(modelName, prompt);
+
+    if (response && response[0] && response[0].generated_text) {
+      return response[0].generated_text.split(',').map(flag => flag.trim());
+    }
+
+    return [];
+  }
+
+  private getRecommendation(fraudLabel: string, flags: string[]): string {
+    if (fraudLabel === 'Severe' || flags.length > 3) {
+      return 'Reject claim and initiate investigation';
+    } else if (fraudLabel === 'High') {
+      return 'Review claim carefully and request additional documentation';
+    } else if (fraudLabel === 'Medium') {
+      return 'Verify claim details and monitor for suspicious activity';
+    } else {
+      return 'Process claim as usual';
+    }
+  }
+
+  private async getExplanation(claim: ClaimData, fraudScore: number, flags: string[]): Promise<string> {
+    // Use a text generation model to explain the fraud analysis results
+    const modelName = 'google/flan-t5-base';
+    const prompt = `Explain why the following claim has a fraud score of ${fraudScore} and the following flags: ${flags.join(', ')}. Claim details: ${JSON.stringify(claim)}`;
+    const response = await this.queryHuggingFace(modelName, prompt);
+
+    if (response && response[0] && response[0].generated_text) {
+      return response[0].generated_text;
+    }
+
+    return 'No explanation available';
+  }
+
+  private getMockResponse(modelName: string, inputs: any): any {
+    console.log(`Using mock response for ${modelName} with inputs:`, inputs);
+
+    if (modelName === 'laiyer/deberta-v3-base-turbo-finetuned-text-classification-fraud-detection') {
+      // Mock response for fraud score
+      return [
+        { label: 'LEGIT', score: 0.2 },
+        { label: 'FRAUD', score: 0.8 }
+      ];
+    } else if (modelName === 'google/flan-t5-base') {
+      // Mock response for text generation (flags and explanation)
+      return [{ generated_text: 'Inconsistent employment status, Suspicious email address' }];
+    }
+
+    return {};
   }
 }
 
