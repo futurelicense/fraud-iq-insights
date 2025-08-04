@@ -25,8 +25,9 @@ import { ClaimsTable } from '../components/dashboard/ClaimsTable';
 import { AnalyticsPanel } from '../components/dashboard/AnalyticsPanel';
 import { AIInsightsPanel } from '../components/AIInsightsPanel';
 
-import { fraudAnalyzer } from '../services/fraudAnalyzer';
+import { EnterpriseFraudAnalyzer } from '../services/EnterpriseeFraudAnalyzer';
 import { ClaimData, AnalyzedClaim, DashboardStats } from '../types/fraud';
+import { RiskAssessmentResult } from '../types/enterprise';
 
 const Index = () => {
   const [claims, setClaims] = useState<ClaimData[]>([]);
@@ -34,6 +35,7 @@ const Index = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [isHuggingFaceConfigured, setIsHuggingFaceConfigured] = useState(false);
+  const [enterpriseAnalyzer] = useState(() => new EnterpriseFraudAnalyzer());
   const [dashboardStats, setDashboardStats] = useState<DashboardStats>({
     total_claims: 0,
     low_risk: 0,
@@ -58,11 +60,35 @@ const Index = () => {
       const analyses: AnalyzedClaim[] = [];
       
       for (let i = 0; i < data.length; i++) {
-        const claim = data[i];
-        const analysis = await fraudAnalyzer.analyzeClaim(claim);
+        const legacyClaim = data[i];
+        
+        // Convert legacy data to enterprise format
+        const { claim, claimant, employer, contextData } = enterpriseAnalyzer.convertLegacyToEnterprise(legacyClaim);
+        
+        // Perform enterprise fraud analysis
+        const riskAssessment: RiskAssessmentResult = await enterpriseAnalyzer.analyzeClaimEnterprise(
+          claim, 
+          claimant, 
+          employer, 
+          contextData
+        );
+        
+        // Convert back to legacy format for UI compatibility
+        const analysis = {
+          claim_id: riskAssessment.claimId,
+          fraud_score: riskAssessment.overallRiskScore / 1000, // Normalize to 0-1 scale
+          fraud_label: (riskAssessment.riskLevel === 'CRITICAL' ? 'Severe' : 
+                       riskAssessment.riskLevel === 'HIGH' ? 'High' :
+                       riskAssessment.riskLevel === 'MEDIUM' ? 'Medium' : 'Low') as 'Low' | 'Medium' | 'High' | 'Severe',
+          explanation: riskAssessment.riskFactors.map(f => f.description).join('; '),
+          flags: riskAssessment.riskFactors.map(f => f.factorName),
+          recommendation: riskAssessment.recommendedActions.join('; '),
+          confidence: riskAssessment.confidenceScore,
+          analyzed_at: riskAssessment.assessmentDate
+        };
         
         const analyzedClaim: AnalyzedClaim = {
-          ...claim,
+          ...legacyClaim,
           analysis
         };
         
@@ -84,12 +110,12 @@ const Index = () => {
 
   const handleApiKeySet = (apiKey: string) => {
     if (apiKey) {
-      fraudAnalyzer.setApiKey(apiKey);
+      enterpriseAnalyzer.setApiKey(apiKey);
       setIsHuggingFaceConfigured(true);
-      toast.success('Hugging Face API configured successfully');
+      toast.success('Enterprise AI fraud analysis configured successfully');
     } else {
       setIsHuggingFaceConfigured(true);
-      toast.info('Continuing in demo mode with simulated AI analysis');
+      toast.info('Continuing in demo mode with enterprise business rules');
     }
   };
 
