@@ -201,6 +201,8 @@ export function ClaimsTable({ claims, onExport }: ClaimsTableProps) {
                     </div>
                   </TableHead>
                   <TableHead>Risk Level</TableHead>
+                  <TableHead>Identity Status</TableHead>
+                  <TableHead>Employer Risk</TableHead>
                   <TableHead>Flags</TableHead>
                   <TableHead 
                     className="cursor-pointer hover:bg-muted/50"
@@ -240,6 +242,18 @@ export function ClaimsTable({ claims, onExport }: ClaimsTableProps) {
                       <Badge className={getRiskBadgeColor(claim.analysis.fraud_label)}>
                         {claim.analysis.fraud_label}
                       </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={(claim as any).Identity_Verification_Status === 'VERIFIED' ? 'default' : 'destructive'}>
+                        {(claim as any).Identity_Verification_Status || 'UNKNOWN'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        <Badge variant={parseFloat((claim as any).Employer_Risk_Score || '0') > 70 ? 'destructive' : 'secondary'}>
+                          {(claim as any).Employer_Risk_Score || 'N/A'}%
+                        </Badge>
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-1">

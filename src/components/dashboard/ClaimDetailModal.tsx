@@ -109,6 +109,36 @@ export function ClaimDetailModal({ claim, isOpen, onClose }: ClaimDetailModalPro
                   <span className="font-mono text-sm">{claim.Device_ID}</span>
                 </div>
               </div>
+              
+              {/* Enterprise Identity Verification */}
+              {(claim as any).Identity_Verification_Status && (
+                <>
+                  <Separator />
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-2">Identity Verification</p>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-sm">Status:</span>
+                        <Badge variant={(claim as any).Identity_Verification_Status === 'VERIFIED' ? 'default' : 'destructive'}>
+                          {(claim as any).Identity_Verification_Status}
+                        </Badge>
+                      </div>
+                      {(claim as any).Identity_Score && (
+                        <div className="flex justify-between">
+                          <span className="text-sm">Identity Score:</span>
+                          <span className="text-sm font-medium">{(claim as any).Identity_Score}%</span>
+                        </div>
+                      )}
+                      {(claim as any).Document_Types_Provided && (
+                        <div className="flex justify-between">
+                          <span className="text-sm">Documents:</span>
+                          <span className="text-sm">{(claim as any).Document_Types_Provided}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
 
@@ -160,6 +190,46 @@ export function ClaimDetailModal({ claim, isOpen, onClose }: ClaimDetailModalPro
                   </div>
                 </>
               )}
+              
+              {/* Enterprise Employment Data */}
+              <Separator />
+              <div>
+                <p className="text-sm text-muted-foreground mb-2">Enterprise Risk Indicators</p>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  {(claim as any).Employer_Risk_Score && (
+                    <div className="flex justify-between">
+                      <span>Employer Risk:</span>
+                      <Badge variant={parseFloat((claim as any).Employer_Risk_Score) > 70 ? 'destructive' : 'secondary'}>
+                        {(claim as any).Employer_Risk_Score}%
+                      </Badge>
+                    </div>
+                  )}
+                  {(claim as any).Geographic_Risk_Score && (
+                    <div className="flex justify-between">
+                      <span>Geographic Risk:</span>
+                      <Badge variant={parseFloat((claim as any).Geographic_Risk_Score) > 70 ? 'destructive' : 'secondary'}>
+                        {(claim as any).Geographic_Risk_Score}%
+                      </Badge>
+                    </div>
+                  )}
+                  {(claim as any).Employment_History_Verified && (
+                    <div className="flex justify-between">
+                      <span>Employment Verified:</span>
+                      <Badge variant={(claim as any).Employment_History_Verified === 'YES' ? 'default' : 'destructive'}>
+                        {(claim as any).Employment_History_Verified}
+                      </Badge>
+                    </div>
+                  )}
+                  {(claim as any).Address_Verification_Status && (
+                    <div className="flex justify-between">
+                      <span>Address Status:</span>
+                      <Badge variant={(claim as any).Address_Verification_Status === 'VERIFIED' ? 'default' : 'destructive'}>
+                        {(claim as any).Address_Verification_Status}
+                      </Badge>
+                    </div>
+                  )}
+                </div>
+              </div>
             </CardContent>
           </Card>
 
