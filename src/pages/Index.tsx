@@ -89,7 +89,13 @@ const Index = () => {
         
         const analyzedClaim: AnalyzedClaim = {
           ...legacyClaim,
-          analysis
+          analysis,
+          // Add enterprise fields for UI display
+          Identity_Verification_Status: contextData.identity_verification_status || 'PENDING',
+          Employer_Risk_Score: contextData.employer_risk_score || '0',
+          Geographic_Risk_Score: contextData.geographic_risk_score || '0',
+          Device_Fingerprint: contextData.device_fingerprint,
+          Financial_Institution_Risk_Level: contextData.financial_institution_risk
         };
         
         analyses.push(analyzedClaim);

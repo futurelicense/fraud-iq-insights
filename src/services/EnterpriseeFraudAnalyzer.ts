@@ -142,23 +142,23 @@ export class EnterpriseFraudAnalyzer {
       emailAddress: legacyClaim.Email || 'unknown@legacy.com',
       phoneNumber: legacyClaim.Phone || '000-000-0000',
       mailingAddress: {
-        streetAddress1: 'Legacy Address',
+        streetAddress1: legacyClaim.Address_History || 'Legacy Address',
         city: 'Unknown',
         state: 'Unknown',
         zipCode: '00000',
         country: 'US'
       },
       residenceAddress: {
-        streetAddress1: 'Legacy Address',
+        streetAddress1: legacyClaim.Address_History || 'Legacy Address',
         city: 'Unknown',
         state: 'Unknown',
         zipCode: '00000',
         country: 'US'
       },
       preferredLanguage: 'EN',
-      riskScore: 0,
+      riskScore: parseFloat(legacyClaim.Identity_Score) || 0,
       riskFlags: [],
-      identityVerificationStatus: 'PENDING',
+      identityVerificationStatus: legacyClaim.Identity_Verification_Status || 'PENDING',
       accountCreationDate: new Date().toISOString(),
       accountStatus: 'ACTIVE'
     };
@@ -168,7 +168,7 @@ export class EnterpriseFraudAnalyzer {
       federalEin: 'LEGACY_EIN',
       legalName: legacyClaim.Employer_Name,
       naicsCode: '999999', // Unknown industry
-      industryDescription: 'Unknown Industry',
+      industryDescription: legacyClaim.Industry_Risk_Level || 'Unknown Industry',
       address: {
         streetAddress1: 'Legacy Employer Address',
         city: 'Unknown',
@@ -177,11 +177,11 @@ export class EnterpriseFraudAnalyzer {
         country: 'US'
       },
       status: 'ACTIVE',
-      riskLevel: 'LOW',
+      riskLevel: legacyClaim.Employer_Risk_Score > 70 ? 'HIGH' : legacyClaim.Employer_Risk_Score > 40 ? 'MEDIUM' : 'LOW',
       totalEmployees: 0,
       quarterlyWageReports: [],
-      suspiciousActivityFlags: [],
-      lastAuditDate: undefined
+      suspiciousActivityFlags: legacyClaim.Mass_Layoff_Event === 'TRUE' ? ['MASS_LAYOFF'] : [],
+      lastAuditDate: legacyClaim.Employer_Audit_History ? new Date().toISOString() : undefined
     } : undefined;
 
     const contextData: Record<string, any> = {
@@ -190,6 +190,17 @@ export class EnterpriseFraudAnalyzer {
       device_id: legacyClaim.Device_ID,
       employment_status: legacyClaim.Employment_Status,
       wage_reported: legacyClaim.Wage_Reported,
+      identity_verification_status: legacyClaim.Identity_Verification_Status,
+      identity_score: legacyClaim.Identity_Score,
+      employer_risk_score: legacyClaim.Employer_Risk_Score,
+      geographic_risk_score: legacyClaim.Geographic_Risk_Score,
+      device_fingerprint: legacyClaim.Device_Fingerprint,
+      financial_institution_risk: legacyClaim.Financial_Institution_Risk_Level,
+      cross_reference_flags: {
+        family_members_claims: legacyClaim.Family_Members_Claims,
+        shared_address_count: legacyClaim.Shared_Address_Count,
+        shared_phone_count: legacyClaim.Shared_Phone_Count
+      },
       legacy_claim_data: legacyClaim
     };
 

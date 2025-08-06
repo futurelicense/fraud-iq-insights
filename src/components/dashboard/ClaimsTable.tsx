@@ -203,6 +203,7 @@ export function ClaimsTable({ claims, onExport }: ClaimsTableProps) {
                   <TableHead>Risk Level</TableHead>
                   <TableHead>Identity Status</TableHead>
                   <TableHead>Employer Risk</TableHead>
+                  <TableHead>Geographic Risk</TableHead>
                   <TableHead>Flags</TableHead>
                   <TableHead 
                     className="cursor-pointer hover:bg-muted/50"
@@ -244,14 +245,21 @@ export function ClaimsTable({ claims, onExport }: ClaimsTableProps) {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={(claim as any).Identity_Verification_Status === 'VERIFIED' ? 'default' : 'destructive'}>
-                        {(claim as any).Identity_Verification_Status || 'UNKNOWN'}
+                      <Badge variant={claim.Identity_Verification_Status === 'VERIFIED' ? 'default' : claim.Identity_Verification_Status === 'FAILED' ? 'destructive' : 'secondary'}>
+                        {claim.Identity_Verification_Status || 'PENDING'}
                       </Badge>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2">
-                        <Badge variant={parseFloat((claim as any).Employer_Risk_Score || '0') > 70 ? 'destructive' : 'secondary'}>
-                          {(claim as any).Employer_Risk_Score || 'N/A'}%
+                        <Badge variant={parseFloat(claim.Employer_Risk_Score || '0') > 70 ? 'destructive' : parseFloat(claim.Employer_Risk_Score || '0') > 40 ? 'secondary' : 'default'}>
+                          {claim.Employer_Risk_Score ? `${claim.Employer_Risk_Score}%` : 'LOW'}
+                        </Badge>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        <Badge variant={parseFloat(claim.Geographic_Risk_Score || '0') > 70 ? 'destructive' : parseFloat(claim.Geographic_Risk_Score || '0') > 40 ? 'secondary' : 'default'}>
+                          {claim.Geographic_Risk_Score ? `${claim.Geographic_Risk_Score}%` : 'LOW'}
                         </Badge>
                       </div>
                     </TableCell>

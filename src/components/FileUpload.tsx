@@ -41,17 +41,32 @@ export function FileUpload({ onDataLoaded, isLoading }: FileUploadProps) {
     disabled: isLoading
   });
 
-  const downloadSample = () => {
-    const sampleCSV = CSVParser.generateSampleCSV();
-    const blob = new Blob([sampleCSV], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'sample_claims.csv';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+  const downloadSample = async () => {
+    try {
+      const response = await fetch('/sample_enterprise_claims.csv');
+      const csvContent = await response.text();
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'sample_enterprise_claims.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      // Fallback to generated sample
+      const sampleCSV = CSVParser.generateSampleCSV();
+      const blob = new Blob([sampleCSV], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'sample_claims.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
   };
 
   return (

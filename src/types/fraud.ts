@@ -30,6 +30,12 @@ export interface FraudAnalysis {
 
 export interface AnalyzedClaim extends ClaimData {
   analysis: FraudAnalysis;
+  // Enterprise fields for UI display
+  Identity_Verification_Status?: string;
+  Employer_Risk_Score?: string;
+  Geographic_Risk_Score?: string;
+  Device_Fingerprint?: string;
+  Financial_Institution_Risk_Level?: string;
 }
 
 export interface DashboardStats {
