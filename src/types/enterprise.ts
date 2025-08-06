@@ -18,6 +18,8 @@ export interface BenefitsClaim {
   lastModifiedDate: string;
   createdBy: string;
   lastModifiedBy: string;
+  ipAddress?: string;
+  employerId?: string;
 }
 
 export interface ClaimantProfile {
@@ -205,6 +207,8 @@ export interface RiskAssessmentResult {
   autoApprovalEligible: boolean;
   modelVersion: string;
   confidenceScore: number;
+  processingTimeMs?: number;
+  emergingThreats?: string[];
 }
 
 export interface RiskFactor {
