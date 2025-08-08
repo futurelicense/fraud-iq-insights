@@ -24,8 +24,12 @@ import { RiskDistributionChart } from '../components/dashboard/RiskDistributionC
 import { ClaimsTable } from '../components/dashboard/ClaimsTable';
 import { AnalyticsPanel } from '../components/dashboard/AnalyticsPanel';
 import { AIInsightsPanel } from '../components/AIInsightsPanel';
+import AdvancedAnalytics from '../components/analytics/AdvancedAnalytics';
+import PerformanceMetrics from '../components/analytics/PerformanceMetrics';
 
 import { EnterpriseFraudAnalyzer } from '../services/EnterpriseeFraudAnalyzer';
+import { RealTimeRiskScoring } from '../services/RealTimeRiskScoring';
+import { PatternDetectionEngine } from '../services/PatternDetectionEngine';
 import { ClaimData, AnalyzedClaim, DashboardStats } from '../types/fraud';
 import { RiskAssessmentResult } from '../types/enterprise';
 
@@ -36,6 +40,8 @@ const Index = () => {
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [isHuggingFaceConfigured, setIsHuggingFaceConfigured] = useState(false);
   const [enterpriseAnalyzer] = useState(() => new EnterpriseFraudAnalyzer());
+  const [realTimeScoring] = useState(() => new RealTimeRiskScoring());
+  const [patternEngine] = useState(() => new PatternDetectionEngine());
   const [dashboardStats, setDashboardStats] = useState<DashboardStats>({
     total_claims: 0,
     low_risk: 0,
@@ -280,7 +286,7 @@ const Index = () => {
         {analyzedClaims.length > 0 && (
           <Tabs defaultValue="overview" className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
-              <TabsList className="grid w-full sm:w-auto grid-cols-3">
+            <TabsList className="grid w-full sm:w-auto grid-cols-5">
                 <TabsTrigger value="overview" className="flex items-center space-x-2">
                   <BarChart3 className="h-4 w-4" />
                   <span>Overview</span>
@@ -288,6 +294,14 @@ const Index = () => {
                 <TabsTrigger value="claims" className="flex items-center space-x-2">
                   <FileText className="h-4 w-4" />
                   <span>Claims</span>
+                </TabsTrigger>
+                <TabsTrigger value="analytics" className="flex items-center space-x-2">
+                  <TrendingUp className="h-4 w-4" />
+                  <span>Analytics</span>
+                </TabsTrigger>
+                <TabsTrigger value="performance" className="flex items-center space-x-2">
+                  <Shield className="h-4 w-4" />
+                  <span>Performance</span>
                 </TabsTrigger>
                 <TabsTrigger value="insights" className="flex items-center space-x-2">
                   <Brain className="h-4 w-4" />
@@ -314,6 +328,14 @@ const Index = () => {
 
             <TabsContent value="claims" className="space-y-6">
               <ClaimsTable claims={analyzedClaims} onExport={handleExportClaims} />
+            </TabsContent>
+
+            <TabsContent value="analytics" className="space-y-6">
+              <AdvancedAnalytics />
+            </TabsContent>
+
+            <TabsContent value="performance" className="space-y-6">
+              <PerformanceMetrics />
             </TabsContent>
 
             <TabsContent value="insights" className="space-y-6">
